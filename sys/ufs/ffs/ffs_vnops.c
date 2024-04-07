@@ -576,3 +576,9 @@ ffs_gop_size(struct vnode *vp, off_t size, off_t *eobp, int flags)
 		*eobp = ffs_blkroundup(fs, size);
 	}
 }
+
+int
+ffs_fallocate(void *v) {
+    printf("Fallocate!\n");
+    return 0;
+}
