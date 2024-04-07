@@ -1,3 +1,4 @@
-./tools
-./.cache
-./build
+/build
+/.cache
+/compile_commands.json
+/external
