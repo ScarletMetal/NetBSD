@@ -139,6 +139,7 @@ int	ffs_lock(void *);
 int	ffs_unlock(void *);
 int	ffs_islocked(void *);
 int	ffs_full_fsync(struct vnode *, int);
+int ffs_fallocate(void *);
 
 /* ffs_extattr.c */
 int	ffs_openextattr(void *);

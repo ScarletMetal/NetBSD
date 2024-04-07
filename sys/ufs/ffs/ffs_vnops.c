@@ -115,7 +115,7 @@ const struct vnodeopv_entry_desc ffs_vnodeop_entries[] = {
 	{ &vop_setattr_desc, ufs_setattr },		/* setattr */
 	{ &vop_read_desc, ffs_read },			/* read */
 	{ &vop_write_desc, ffs_write },			/* write */
-	{ &vop_fallocate_desc, genfs_eopnotsupp },	/* fallocate */
+	{ &vop_fallocate_desc, ffs_fallocate },	/* fallocate */
 	{ &vop_fdiscard_desc, genfs_eopnotsupp },	/* fdiscard */
 	{ &vop_ioctl_desc, genfs_enoioctl },		/* ioctl */
 	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
