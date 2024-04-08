@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.138 2021/12/14 11:06:12 chs Exp $");
 #include <sys/signalvar.h>
 #include <sys/kauth.h>
 #include <sys/wapbl.h>
+#include <sys/errno.h>
 
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/genfs/genfs.h>
@@ -579,6 +580,41 @@ ffs_gop_size(struct vnode *vp, off_t size, off_t *eobp, int flags)
 
 int
 ffs_fallocate(void *v) {
+    struct vop_fallocate_args  /*{
+        const struct vnodeop_desc *a_desc;
+        struct vnode *a_vp;
+        off_t a_pos;
+        off_t a_len;
+    } */ *ap = v;
+
+    int error;
+    off_t a_len;
+    off_t a_pos;
+    /* struct inode *ip; */
+    struct vnode *vp;
+
+    a_len = ap->a_len;
+    a_pos = ap->a_pos;
+    /* ip = VTOI(vp); */
+    vp = ap->a_vp;
+
+    if (vp->v_type != VREG) {
+        return ENODEV;
+    }
+
+    if (a_len <= 0 || a_pos < 0) {
+        return EINVAL;
+    }
+
+	UFS_WAPBL_JUNLOCK_ASSERT(vp->v_mount);
+
+	error = UFS_WAPBL_BEGIN(vp->v_mount);
+	if (error) {
+		return error;
+	}
+
+    UFS_WAPBL_END(vp->v_mount);
+
     printf("Fallocate!\n");
-    return 0;
+    return (error);
 }
