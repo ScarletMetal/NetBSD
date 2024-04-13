@@ -587,22 +587,34 @@ ffs_fallocate(void *v) {
         off_t a_len;
     } */ *ap = v;
 
-    int error;
-    off_t a_len;
-    off_t a_pos;
-    /* struct inode *ip; */
+    printf("Starting to fallocate\n");
+
+    int error = 0;
+    int gid;
+    int uid;
+    off_t a_len, a_off;
+    off_t bytelen, blkoffset;
+    struct fs *fs;
+    struct inode *ip;
     struct vnode *vp;
+    kauth_cred_t cred;
+
 
     a_len = ap->a_len;
-    a_pos = ap->a_pos;
-    /* ip = VTOI(vp); */
+    a_off = ap->a_pos;
     vp = ap->a_vp;
+    ip = VTOI(vp);
+
+    cred = kauth_cred_get();
+    uid = kauth_cred_getuid(cred);
+    gid = kauth_cred_getgid(cred);
+    fs = ip->i_fs;
 
     if (vp->v_type != VREG) {
         return ENODEV;
     }
 
-    if (a_len <= 0 || a_pos < 0) {
+    if (a_len <= 0 || a_off < 0) {
         return EINVAL;
     }
 
@@ -613,8 +625,124 @@ ffs_fallocate(void *v) {
 		return error;
 	}
 
+    printf("UID=%d,GID=%d BLOCK_SIZE=%d\n", uid, gid, fs->fs_bsize);
+
+    off_t resid = a_len;
+    off_t origoff = a_off;
+    off_t oldoff = a_off;
+
+    off_t original_len = ip->i_size;
+    off_t new_len = a_off + a_len;
+    printf("olen=%lu nlen=%lu\n", original_len, new_len);
+    if (original_len >= new_len) {
+        printf("Nothing to Fallocate\n");
+        goto out;
+    }
+
+    if (a_off < original_len) {
+        off_t exisiting_len = original_len - a_off;
+        /* printf("Allocating in a partially allocated location, starting from %lu existing %lu \n", original_len, exisiting_len); */
+        oldoff = original_len;
+        resid = (a_len - exisiting_len);
+    }
+
+	off_t preallocoff = round_page(ufs_blkroundup(fs, MAX(original_len, a_len)));
+    off_t endallocoff = new_len - ufs_blkoff(fs, new_len);
+
+    while (resid > 0) {
+		int ubc_flags = UBC_WRITE;
+		bool overwrite; /* if we're overwrite a whole block */
+		off_t newoff;
+
+		blkoffset = ufs_blkoff(fs, oldoff);
+		bytelen = MIN(fs->fs_bsize - blkoffset, resid);
+		if (bytelen == 0) {
+			break;
+		}
+
+		/*
+		 * if we're filling in a hole, allocate the blocks now and
+		 * initialize the pages first.  if we're extending the file,
+		 * we can safely allocate blocks without initializing pages
+		 * since the new blocks will be inaccessible until the write
+		 * is complete.
+		 */
+		overwrite = oldoff >= preallocoff &&
+		    oldoff < endallocoff;
+		if (!overwrite && (vp->v_vflag & VV_MAPPED) == 0 && blkoffset && (oldoff & PAGE_MASK) == 0) {
+            printf("Doing something weird\n");
+			vsize_t len;
+
+			len = trunc_page(bytelen);
+			a_len -= ufs_blkoff(fs, a_len);
+			if (a_len > 0) {
+				overwrite = true;
+				bytelen = len;
+			}
+		}
+
+		newoff = oldoff + bytelen;
+		if (vp->v_size < newoff) {
+			uvm_vnp_setwritesize(vp, newoff);
+		}
+
+		if (!overwrite) {
+			error = ufs_balloc_range(vp, oldoff, bytelen,
+			    cred, 0);
+			if (error)
+				break;
+		} else {
+			genfs_node_wrlock(vp);
+			error = GOP_ALLOC(vp, oldoff, bytelen,
+			    0, cred);
+			genfs_node_unlock(vp);
+			if (error)
+				break;
+			ubc_flags |= UBC_FAULTBUSY;
+		}
+
+        /* Reduce the number of remaining bytes to allocate */
+        resid -= bytelen;
+
+		/*
+         * update UVM's notion of the size now that we've allocated new blocks for this file.
+		 */
+
+		if (vp->v_size < newoff) {
+			uvm_vnp_setsize(vp, newoff);
+		}
+
+		if (error)
+			break;
+
+		/*
+		 * flush what we just wrote if necessary.
+		 * XXXUBC simplistic async flushing.
+		 */
+
+		if (oldoff >> 16 != newoff >> 16) {
+            /* printf("running VOP_PUTPAGES\n"); */
+			rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
+			error = VOP_PUTPAGES(vp, (oldoff >> 16) << 16,
+			    (newoff >> 16) << 16,
+			    PGO_CLEANIT | PGO_JOURNALLOCKED | PGO_LAZY);
+			if (error)
+				break;
+		}
+
+        oldoff = newoff;
+	}
+	if (error == 0) {
+		rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
+		error = VOP_PUTPAGES(vp, trunc_page(origoff & fs->fs_bmask),
+		    round_page(ufs_blkroundup(fs, oldoff)),
+		    PGO_CLEANIT | PGO_SYNCIO | PGO_JOURNALLOCKED);
+	}
+
+	error = UFS_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
     UFS_WAPBL_END(vp->v_mount);
 
-    printf("Fallocate!\n");
+out:
+    printf("Fallocate End!\n");
     return (error);
 }
