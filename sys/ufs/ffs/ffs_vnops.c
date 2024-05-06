@@ -650,7 +650,6 @@ ffs_fallocate(void *v) {
     off_t endallocoff = new_len - ufs_blkoff(fs, new_len);
 
     while (resid > 0) {
-		int ubc_flags = UBC_WRITE;
 		bool overwrite; /* if we're overwrite a whole block */
 		off_t newoff;
 
@@ -686,20 +685,12 @@ ffs_fallocate(void *v) {
 			uvm_vnp_setwritesize(vp, newoff);
 		}
 
-		if (!overwrite) {
-			error = ufs_balloc_range(vp, oldoff, bytelen,
-			    cred, 0);
-			if (error)
-				break;
-		} else {
-			genfs_node_wrlock(vp);
-			error = GOP_ALLOC(vp, oldoff, bytelen,
-			    0, cred);
-			genfs_node_unlock(vp);
-			if (error)
-				break;
-			ubc_flags |= UBC_FAULTBUSY;
-		}
+        genfs_node_wrlock(vp);
+        error = GOP_ALLOC(vp, oldoff, bytelen,
+            0, cred);
+        genfs_node_unlock(vp);
+        if (error)
+            break;
 
         /* Reduce the number of remaining bytes to allocate */
         resid -= bytelen;
@@ -726,6 +717,7 @@ ffs_fallocate(void *v) {
 			error = VOP_PUTPAGES(vp, (oldoff >> 16) << 16,
 			    (newoff >> 16) << 16,
 			    PGO_CLEANIT | PGO_JOURNALLOCKED | PGO_LAZY);
+            rw_exit(vp->v_uobj.vmobjlock, RW_WRITER);
 			if (error)
 				break;
 		}
@@ -737,6 +729,7 @@ ffs_fallocate(void *v) {
 		error = VOP_PUTPAGES(vp, trunc_page(origoff & fs->fs_bmask),
 		    round_page(ufs_blkroundup(fs, oldoff)),
 		    PGO_CLEANIT | PGO_SYNCIO | PGO_JOURNALLOCKED);
+        rw_exit(vp->v_uobj.vmobjlock, RW_WRITER);
 	}
 
 	error = UFS_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
