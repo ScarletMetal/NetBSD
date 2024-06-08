@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.80 2023/12/20 05:33:58 thorpej Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.82 2024/05/20 19:15:48 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.80 2023/12/20 05:33:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.82 2024/05/20 19:15:48 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

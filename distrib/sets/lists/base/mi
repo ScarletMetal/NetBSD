@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1334 2024/03/03 04:35:18 riastradh Exp $
+# $NetBSD: mi,v 1.1345 2024/06/02 00:22:21 kre Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -131,10 +131,10 @@
 ./etc/unbound					base-sys-root
 ./etc/uucp					base-obsolete		obsolete
 ./etc/zfs					base-zfs-root
-./lib						base-sys-root		compatdir
+./lib						base-sys-root
 ./lib/libdes.so					base-obsolete		obsolete
 ./lib/libssp.so					base-obsolete		obsolete
-./lib/npf					base-sys-root		compatfile
+./lib/npf					base-sys-root
 ./libdata					base-sys-root
 ./libdata/firmware				base-firmware-root
 ./libdata/firmware/bcm43xx			base-obsolete		obsolete
@@ -1174,7 +1174,7 @@
 ./usr/include/uv				base-obsolete		obsolete
 ./usr/include/uvm				base-c-usr
 ./usr/include/vm				base-obsolete		obsolete
-./usr/lib					base-sys-usr		compatdir
+./usr/lib					base-sys-usr
 ./usr/lib/clang					base-sys-usr
 ./usr/lib/clang/13.0.0				base-sys-usr
 ./usr/lib/clang/13.0.0/include			base-sys-usr
@@ -1202,15 +1202,15 @@
 ./usr/lib/dtrace/psinfo.d			base-sys-usr		dtrace
 ./usr/lib/dtrace/signal.d			base-sys-usr		dtrace
 ./usr/lib/dtrace/unistd.d			base-sys-usr		dtrace
-./usr/lib/i18n					base-i18n-root		compatfile
+./usr/lib/i18n					base-i18n-root
 ./usr/lib/libntp.so				base-obsolete		obsolete
 ./usr/lib/libssp.so				base-obsolete		obsolete
 ./usr/lib/libusb.a				base-obsolete		obsolete
 ./usr/lib/libusb.so				base-obsolete		obsolete
-./usr/lib/lua					base-sys-usr		compatfile
+./usr/lib/lua					base-sys-usr
 ./usr/lib/lua/5.1				base-obsolete		obsolete
 ./usr/lib/lua/5.3				base-obsolete		obsolete
-./usr/lib/lua/5.4				base-sys-usr		compatfile
+./usr/lib/lua/5.4				base-sys-usr
 ./usr/lib/named					base-sys-usr
 ./usr/lib/npf					base-obsolete		obsolete
 ./usr/lib/openssl				base-crypto-usr
@@ -1251,22 +1251,23 @@
 ./usr/lib/runemodule/libUTF8.so			base-obsolete		obsolete
 ./usr/lib/runemodule/libUTF8.so.3		base-obsolete		obsolete
 ./usr/lib/runemodule/libUTF8.so.3.0		base-obsolete		obsolete
-./usr/lib/security				base-sys-usr		compatfile
+./usr/lib/security				base-sys-usr
 ./usr/libdata					base-sys-usr
 ./usr/libdata/debug				base-sys-usr
 ./usr/libdata/debug/bin				base-sys-usr
-./usr/libdata/debug/lib				base-sys-usr		compatdir
-./usr/libdata/debug/lib/npf			base-sys-usr		compatfile
+./usr/libdata/debug/lib				base-sys-usr
+./usr/libdata/debug/lib/npf			base-sys-usr
 ./usr/libdata/debug/libexec			base-sys-usr
 ./usr/libdata/debug/sbin			base-sys-usr
 ./usr/libdata/debug/stand			base-sys-usr
 ./usr/libdata/debug/usr				base-sys-usr
 ./usr/libdata/debug/usr/bin			base-sys-usr
 ./usr/libdata/debug/usr/games			base-sys-usr
-./usr/libdata/debug/usr/lib			base-sys-usr		compatdir
-./usr/libdata/debug/usr/lib/i18n		base-i18n-root		compatfile
+./usr/libdata/debug/usr/lib			base-sys-usr
+./usr/libdata/debug/usr/lib/i18n		base-i18n-root
 ./usr/libdata/debug/usr/lib/named		base-sys-usr
 ./usr/libdata/debug/usr/lib/npf			base-obsolete		obsolete
+./usr/libdata/debug/usr/lib/security		base-sys-usr
 ./usr/libdata/debug/usr/libexec			base-sys-usr
 ./usr/libdata/debug/usr/libexec/ching		base-sys-usr
 ./usr/libdata/debug/usr/libexec/lpr		base-sys-usr
@@ -1321,7 +1322,7 @@
 ./usr/libexec/mail.local			base-mail-bin
 ./usr/libexec/makekey				base-crypto-bin
 ./usr/libexec/makewhatis			base-man-bin		!makemandb
-./usr/libexec/named				base-bind-bin
+./usr/libexec/named				base-obsolete		obsolete
 ./usr/libexec/named-xfer			base-obsolete		obsolete
 ./usr/libexec/ntalkd				base-netutil-bin
 ./usr/libexec/pfspamd				base-obsolete		obsolete
@@ -2485,6 +2486,11 @@
 ./usr/share/examples/blocklist/npf.conf		base-sys-examples
 ./usr/share/examples/certctl			base-sysutil-examples
 ./usr/share/examples/certctl/certs.conf		base-sysutil-examples
+./usr/share/examples/devpubd			base-sys-examples
+./usr/share/examples/devpubd/hooks		base-sys-examples
+./usr/share/examples/devpubd/hooks/99-ucom-symlinks	base-sys-examples
+./usr/share/examples/devpubd/hooks/99-ugen-perms-minipro base-sys-examples
+./usr/share/examples/devpubd/hooks/99-ugen-perms-tigard	base-sys-examples
 ./usr/share/examples/dhcp			base-dhcpd-examples
 ./usr/share/examples/dhcpcd			base-dhcpcd-examples
 ./usr/share/examples/dhcpcd/hooks		base-dhcpcd-examples
@@ -6268,6 +6274,7 @@
 ./usr/share/zoneinfo/WET			base-sys-share		share
 ./usr/share/zoneinfo/Zulu			base-sys-share		share
 ./usr/share/zoneinfo/iso3166.tab		base-sys-share		share
+./usr/share/zoneinfo/leap-seconds.list		base-sys-share		share
 ./usr/share/zoneinfo/leapseconds		base-sys-share		share
 ./usr/share/zoneinfo/posixrules			base-sys-share		share
 ./usr/share/zoneinfo/zone.tab			base-sys-share		share
@@ -6370,8 +6377,6 @@
 ./var/preserve					base-util-root
 ./var/quotas					base-util-root
 ./var/run					base-sys-root
-./var/run/lwresd				base-obsolete		obsolete
-./var/run/named					base-obsolete		obsolete
 ./var/rwho					base-netutil-root
 ./var/shm					base-sys-root
 ./var/spool					base-sys-root

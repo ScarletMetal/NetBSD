@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.53 2023/05/19 14:47:16 hauke Exp $
+# $NetBSD: Makefile,v 1.56 2024/05/31 20:57:32 tsutsui Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -62,6 +62,10 @@ ALL_PORTS:=		${ALL_PORTS} ${BASE_PORTS.${image}}
 .endif
 
 SUBDIR=
+
+.if !empty(ALL_PORTS:Mmac68k) || !empty(ALL_PORTS:Mmacppc)
+MKISOFS=	${TOOL_MKHYBRID}
+.endif
 
 .if !empty(ALL_PORTS:Mmacppc)
 SUBDIR+=	macppc_installboot
@@ -299,7 +303,7 @@ MKISOFS_ARGS.${image}+=	-hfs -part -hide-hfs-list ${.CURDIR}/hide-hfs.lst \
 UUDECODE_FILES=	${BOOTHFS}
 .include <bsd.files.mk>
 .elif defined(USE_APPLE_ISO) || !empty(ports:Mmac68k)
-MKISOFS_ARGS.${image}+=	-apple --macbin -data-change-warn -map ${.CURDIR}/hfsmap.lst
+MKISOFS_ARGS.${image}+=	-apple --macbin -map ${.CURDIR}/hfsmap.lst
 .endif
 
 # Sun (sparc, sparc64, sun3)

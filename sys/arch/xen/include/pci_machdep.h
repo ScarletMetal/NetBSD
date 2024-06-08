@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.21 2022/05/23 15:03:05 bouyer Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.23 2024/05/20 19:15:49 riastradh Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.

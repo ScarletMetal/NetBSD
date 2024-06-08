@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.241 2024/01/12 08:44:42 martin Exp $
+# $NetBSD: HACKS,v 1.244 2024/05/12 23:55:57 msaitoh Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -597,7 +597,7 @@ port	vax
 	file	src/games/gomoku/Makefile : 1.12
 	descr
 		pickmove.c crashes with -O2, warns about ovi.o_intersect being
-		unitialized with -O1, works with -O0
+		uninitialized with -O1, works with -O0
 	kcah
 
 	hack	gdtoa/misc.c miscompile
@@ -1114,4 +1114,24 @@ descr
 	./machine/cpu.h:57:9: error: array subscript 0 is outside array bounds of 'struct cpu_info * const[0]' [-Werror=array-bounds]
 	   56 |         __asm("movq %%gs:%1, %0" :
 	and can't easily be worked around.
+kcah
+
+hack	ctfconvert/gcc: disable gcc dwarf-4 generation
+cdate	Thu Apr  4 19:51:05 EDT 2024
+who	christos
+file	src/external/mit/xorg/lib/gallium.old/Makefile : 1.9
+descr
+	Some files create dwarf info that our ctfmerge can't handle.
+	We downgrade dwarf generation to version 3 which works.
+kcah
+
+hack	ia64: work around feclearexcept/fetestexcept compiler bug
+cdate	Sun May  5 23:06:10 UTC 2024
+who	riastradh
+file	tests/lib/libm/t_fe_round.c
+descr
+	Without judiciously placed __insn_barrier, we get:
+	/tmp//ccJayu9g.s:2793: Warning: Use of 'mov.m' violates RAW dependency 'AR[FPSR].sf0.flags' (impliedf)
+	/tmp//ccJayu9g.s:2793: Warning: Only the first path encountering the conflict is reported
+	/tmp//ccJayu9g.s:2757: Warning: This is the location of the conflicting usage
 kcah

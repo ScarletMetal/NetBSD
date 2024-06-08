@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.11 2018/05/01 19:59:43 christos Exp $
+#	$NetBSD: Makefile,v 1.13 2024/05/24 10:13:44 tsutsui Exp $
 
 .include <bsd.hostinit.mk>
 HOSTPROG=	macppc_installboot
 SRCS=		installboot.c cd9660.c cd9660_util.c
 
-.PATH.c: ${NETBSDSRCDIR}/sys/fs/cd9660
+.PATH.c: ${NETBSDSRCDIR}/usr.sbin/installboot ${NETBSDSRCDIR}/sys/fs/cd9660
 
 HOST_CPPFLAGS+=	-I. -I${.CURDIR}
 #HOST_CPPFLAGS+=	-DDEBUG
@@ -16,6 +16,7 @@ HOST_CPPFLAGS+=	-I. -I${.CURDIR}
 	${HOST_INSTALL_DIR} fs/cd9660
 	${HOST_LN} -s ${NETBSDSRCDIR}/sys/fs/unicode.h fs
 	${HOST_LN} -s ${NETBSDSRCDIR}/sys/fs/cd9660/iso.h fs/cd9660
+	${HOST_LN} -s ${NETBSDSRCDIR}/sys/fs/cd9660/cd9660_extern.h fs/cd9660
 .endif
 
 cleandir distclean: cleaninc

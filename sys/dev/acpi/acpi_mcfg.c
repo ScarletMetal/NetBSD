@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_mcfg.c,v 1.26 2022/10/14 22:10:15 jmcneill Exp $	*/
+/*	$NetBSD: acpi_mcfg.c,v 1.28 2024/05/20 19:15:49 riastradh Exp $	*/
 
 /*-
  * Copyright (C) 2015 NONAKA Kimihiro <nonaka@NetBSD.org>
@@ -28,7 +28,7 @@
 #include "opt_pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.26 2022/10/14 22:10:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.28 2024/05/20 19:15:49 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

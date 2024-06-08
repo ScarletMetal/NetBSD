@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.117 2022/02/27 14:18:52 riastradh Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.119 2024/05/20 19:15:49 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.

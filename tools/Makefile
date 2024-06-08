@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.217 2024/03/27 05:43:38 rillig Exp $
+#	$NetBSD: Makefile,v 1.221 2024/05/31 20:52:58 tsutsui Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -59,7 +59,9 @@ TOOLCHAIN_BITS+= dbsym mdsetimage
 
 DTRACE_BITS=
 .if ${MKDTRACE} != "no" || ${MKCTF} != "no"
-DTRACE_BITS+= .WAIT elftoolchain
+DTRACE_BITS+= .WAIT elftoolchain/common
+DTRACE_BITS+= .WAIT elftoolchain/libelf
+DTRACE_BITS+= .WAIT elftoolchain/libdwarf
 DTRACE_BITS+= .WAIT libctf
 .endif
 .if ${MKCTF} != "no"
@@ -103,7 +105,7 @@ SUBDIR+= cap_mkdb crunchgen ctags gencat hexdump \
 		makewhatis mtree nbperf .WAIT uudecode
 .endif
 
-SUBDIR+= cat rpcgen join lorder m4 mkdep tsort .WAIT yacc .WAIT awk .WAIT lex
+SUBDIR+= cat gzip rpcgen join lorder m4 mkdep tsort .WAIT yacc .WAIT awk .WAIT lex
 .if ${TOOLS_BUILDRUMP} == "no"
 SUBDIR+= xz-include .WAIT grep xz-lib pax .WAIT libprop
 
@@ -217,20 +219,19 @@ SUBDIR+=	elftosb
 
 .if ${MACHINE} == "evbarm" || ${MACHINE} == "evbmips" || \
     ${MACHINE} == "evbppc" || ${MACHINE} == "evbsh3" || \
-    ${MACHINE} == "sandpoint"
-SUBDIR+=	mkubootimage
-.endif
-
-.if ${MACHINE} == "evbarm" || ${MACHINE} == "evbmips" || \
-    ${MACHINE} == "evbppc" || ${MACHINE} == "evbsh3" || \
     ${MACHINE} == "sandpoint" || \
     ${MACHINE_CPU} == "riscv"
+SUBDIR+=	mkubootimage
 SUBDIR+=	libfdt .WAIT
 SUBDIR+=	dtc
 .endif
 
 .if ${MACHINE} == "mvme68k"
 SUBDIR+=	mvme68k-wrtvid
+.endif
+
+.if ${MACHINE} == "mac68k" || ${MACHINE} == "macppc"
+SUBDIR+=	mkhybrid
 .endif
 
 .if ${MKX11} != "no"

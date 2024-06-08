@@ -1,4 +1,4 @@
-/*      $NetBSD: xpci_xenbus.c,v 1.26 2024/02/09 22:08:33 andvar Exp $      */
+/*      $NetBSD: xpci_xenbus.c,v 1.28 2024/05/20 19:15:49 riastradh Exp $      */
 
 /*
  * Copyright (c) 2009 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xpci_xenbus.c,v 1.26 2024/02/09 22:08:33 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xpci_xenbus.c,v 1.28 2024/05/20 19:15:49 riastradh Exp $");
 
 #include "opt_xen.h"
 

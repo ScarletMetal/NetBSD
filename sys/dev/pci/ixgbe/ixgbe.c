@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.349 2024/01/24 05:18:59 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.351 2024/05/30 08:55:02 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.349 2024/01/24 05:18:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.351 2024/05/30 08:55:02 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -358,8 +358,8 @@ SYSCTL_INT(_hw_ix, OID_AUTO, enable_msix, CTLFLAG_RDTUN, &ixgbe_enable_msix, 0,
 /*
  * Number of Queues, can be set to 0,
  * it then autoconfigures based on the
- * number of cpus with a max of 8. This
- * can be overridden manually here.
+ * number of cpus and number of MSI-X vectors.
+ * This can be overridden manually here.
  */
 static int ixgbe_num_queues = 0;
 SYSCTL_INT(_hw_ix, OID_AUTO, num_queues, CTLFLAG_RDTUN, &ixgbe_num_queues, 0,
@@ -1136,6 +1136,21 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	error = ixgbe_read_pba_string(hw, buf, IXGBE_PBANUM_LENGTH);
 	aprint_normal_dev(dev, "PBA number %s\n", error ? "unknown" : buf);
 
+	/* Recovery mode */
+	switch (sc->hw.mac.type) {
+	case ixgbe_mac_X550:
+	case ixgbe_mac_X550EM_x:
+	case ixgbe_mac_X550EM_a:
+		/* >= 2.00 */
+		if (hw->eeprom.nvm_image_ver_high >= 2) {
+			sc->feat_cap |= IXGBE_FEATURE_RECOVERY_MODE;
+			sc->feat_en |= IXGBE_FEATURE_RECOVERY_MODE;
+		}
+		break;
+	default:
+		break;
+	}
+
 	if (sc->feat_en & IXGBE_FEATURE_MSIX) {
 		error = ixgbe_allocate_msix(sc, pa);
 		if (error) {
@@ -1153,21 +1168,6 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 				goto err_out;
 			}
 		}
-	}
-
-	/* Recovery mode */
-	switch (sc->hw.mac.type) {
-	case ixgbe_mac_X550:
-	case ixgbe_mac_X550EM_x:
-	case ixgbe_mac_X550EM_a:
-		/* >= 2.00 */
-		if (hw->eeprom.nvm_image_ver_high >= 2) {
-			sc->feat_cap |= IXGBE_FEATURE_RECOVERY_MODE;
-			sc->feat_en |= IXGBE_FEATURE_RECOVERY_MODE;
-		}
-		break;
-	default:
-		break;
 	}
 
 	if ((sc->feat_en & IXGBE_FEATURE_MSIX) == 0)

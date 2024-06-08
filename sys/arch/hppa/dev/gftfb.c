@@ -1,4 +1,4 @@
-/*	$NetBSD: gftfb.c,v 1.12 2024/03/28 12:50:31 macallan Exp $	*/
+/*	$NetBSD: gftfb.c,v 1.14 2024/04/18 04:52:43 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -212,8 +212,7 @@ gftfb_attach(device_t parent, device_t self, void *aux)
 	struct rasops_info *ri;
 	struct wsemuldisplaydev_attach_args aa;
 	unsigned long defattr = 0;
-	int ret, is_console = 0, i, j;
-	uint8_t cmap[768];
+	int ret, is_console = 0;
 
 	sc->sc_dev = self;
 
@@ -238,7 +237,8 @@ gftfb_attach(device_t parent, device_t self, void *aux)
 	}
 	rom = (struct sti_rom *)kmem_zalloc(sizeof(*rom), KM_SLEEP);
 	rom->rom_softc = &sc->sc_base;
-	ret = sti_rom_setup(rom, paa->pa_iot, paa->pa_memt, sc->sc_romh, sc->sc_base.bases, STI_CODEBASE_MAIN);
+	ret = sti_rom_setup(rom, paa->pa_iot, paa->pa_memt, sc->sc_romh,
+	    sc->sc_base.bases, STI_CODEBASE_MAIN);
 	if (ret != 0) {
 		kmem_free(rom, sizeof(*rom));
 		return;
@@ -329,15 +329,7 @@ gftfb_attach(device_t parent, device_t self, void *aux)
 				defattr);
 	}
 
-	j = 0;
-	rasops_get_cmap(ri, cmap, sizeof(cmap));
-	for (i = 0; i < 256; i++) {
-		sc->sc_cmap_red[i] = cmap[j];
-		sc->sc_cmap_green[i] = cmap[j + 1];
-		sc->sc_cmap_blue[i] = cmap[j + 2];
-		gftfb_putpalreg(sc, i, cmap[j], cmap[j + 1], cmap[j + 2]);
-		j += 3;
-	}
+	gftfb_restore_palette(sc);
 
 	/* no suspend/resume support yet */
 	if (!pmf_device_register(sc->sc_dev, NULL, NULL))
@@ -898,16 +890,22 @@ gftfb_mmap(void *v, void *vs, off_t offset, int prot)
 	struct vcons_data *vd = v;
 	struct gftfb_softc *sc = vd->cookie;
 	struct sti_rom *rom = sc->sc_base.sc_rom;
-	paddr_t pa;
+	paddr_t pa = -1;
 
-	if (offset < 0 || offset >= sc->sc_scr.fblen)
+
+	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)
 		return -1;
 
-	if (sc->sc_mode != WSDISPLAYIO_MODE_DUMBFB)
-		return -1;
+	if (offset >= 0 || offset < sc->sc_scr.fblen) {
+		/* framebuffer */
+		pa = bus_space_mmap(rom->memt, sc->sc_scr.fbaddr, offset,
+		    prot, BUS_SPACE_MAP_LINEAR);
+	} else if (offset >= 0x80000000 && offset < 0x8040000) {
+		/* blitter registers etc. */
+		pa = bus_space_mmap(rom->memt, rom->regh[2],
+		    offset - 0x80000000, prot, BUS_SPACE_MAP_LINEAR);
+	}
 
-	pa = bus_space_mmap(rom->memt, sc->sc_scr.fbaddr, offset, prot,
-	    BUS_SPACE_MAP_LINEAR);
 	return pa;
 }
 
@@ -1008,11 +1006,17 @@ gftfb_getcmap(struct gftfb_softc *sc, struct wsdisplay_cmap *cm)
 static void
 gftfb_restore_palette(struct gftfb_softc *sc)
 {
-	int i;
+	uint8_t cmap[768];
+	int i, j;
 
+	j = 0;
+	rasops_get_cmap(&sc->sc_console_screen.scr_ri, cmap, sizeof(cmap));
 	for (i = 0; i < 256; i++) {
-		gftfb_putpalreg(sc, i, sc->sc_cmap_red[i],
-		    sc->sc_cmap_green[i], sc->sc_cmap_blue[i]);
+		sc->sc_cmap_red[i] = cmap[j];
+		sc->sc_cmap_green[i] = cmap[j + 1];
+		sc->sc_cmap_blue[i] = cmap[j + 2];
+		gftfb_putpalreg(sc, i, cmap[j], cmap[j + 1], cmap[j + 2]);
+		j += 3;
 	}
 }
 

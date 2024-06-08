@@ -1,4 +1,4 @@
-/*	$NetBSD: queries.c,v 1.24 2024/02/02 19:07:58 rillig Exp $	*/
+/*	$NetBSD: queries.c,v 1.29 2024/04/27 12:46:37 rillig Exp $	*/
 # 3 "queries.c"
 
 /*
@@ -15,7 +15,9 @@
  *	such as casts between arithmetic types.
  */
 
-/* lint1-extra-flags: -q 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18 -X 351 */
+/* lint1-extra-flags: -q 1,2,3,4,5,6,7,8,9,10 */
+/* lint1-extra-flags: -q 11,12,13,14,15,16,17,18,19,20 */
+/* lint1-extra-flags: -X 351 */
 
 typedef unsigned char u8_t;
 typedef unsigned short u16_t;
@@ -34,6 +36,7 @@ typedef double _Complex c64_t;
 typedef char *str_t;
 typedef const char *cstr_t;
 typedef volatile char *vstr_t;
+typedef typeof(sizeof 0) size_t;
 
 _Bool cond;
 
@@ -68,6 +71,11 @@ char *str;
 const char *cstr;
 volatile char *vstr;
 
+void *void_ptr;
+const void *const_void_ptr;
+char *char_ptr;
+int *int_ptr;
+
 int
 Q1(double dbl)
 {
@@ -101,7 +109,7 @@ Q3(int i, unsigned u)
 }
 
 unsigned long long
-Q4(signed char *ptr, int i, unsigned long long ull)
+Q4(signed char *ptr, int i, unsigned long long ull, size_t sz)
 {
 
 	/*
@@ -125,6 +133,8 @@ Q4(signed char *ptr, int i, unsigned long long ull)
 	/* expect+2: usual arithmetic conversion for '&' from 'int' to 'unsigned int' [Q4] */
 	/* expect+1: implicit conversion changes sign from 'int' to 'unsigned int' [Q3] */
 	u32 = u32 & u8;
+
+	s8 = ptr[sz];
 
 	/*
 	 * The conversion from 'signed char' to 'int' is done by the integer
@@ -351,9 +361,9 @@ Q9(int x)
 		return (0.0);
 	case 9:
 		return
-# 355 "queries.c" 3 4
+# 365 "queries.c" 3 4
 		((void *)0)
-# 357 "queries.c"
+# 367 "queries.c"
 		/* expect+1: warning: illegal combination of integer 'int' and pointer 'pointer to void' [183] */
 		;
 	case 10:
@@ -443,6 +453,9 @@ Q15(void)
 	ptr_from_uint = &ptr_from_uint;
 	ptr_from_long = &ptr_from_long;
 
+	void_ptr = (void *)0;
+	const_void_ptr = (const void *)0;
+
 	/* expect+1: implicit conversion from integer 0 to pointer 'pointer to void' [Q15] */
 	return 0;
 }
@@ -470,10 +483,55 @@ int Q17_wide_string[] = L" \0	";
 
 /* For Q18, see queries_schar.c and queries_uchar.c. */
 
-/*
- * Since queries do not affect the exit status, force a warning to make this
- * test conform to the general expectation that a test that produces output
- * exits non-successfully.
- */
-/* expect+1: warning: static variable 'unused' unused [226] */
-static int unused;
+void
+convert_from_integer_to_floating(void)
+{
+	/* expect+1: implicit conversion from integer 'unsigned int' to floating point 'float' [Q19] */
+	f32 = 0xffff0000;
+	/* expect+1: implicit conversion from integer 'unsigned int' to floating point 'float' [Q19] */
+	f32 = 0xffffffff;
+	/* expect+1: implicit conversion from integer 'int' to floating point 'float' [Q19] */
+	f32 = s32;
+	/* expect+1: implicit conversion from integer 'unsigned int' to floating point 'float' [Q19] */
+	f32 = u32;
+	/* expect+1: implicit conversion from integer 'int' to floating point 'double' [Q19] */
+	f64 = s32;
+	/* expect+1: implicit conversion from integer 'unsigned int' to floating point 'double' [Q19] */
+	f64 = u32;
+	/* expect+1: implicit conversion from integer 'long long' to floating point 'double' [Q19] */
+	f64 = s64;
+	/* expect+1: implicit conversion from integer 'unsigned long long' to floating point 'double' [Q19] */
+	f64 = u64;
+
+	f32 = 0.0F;
+	f32 = 0.0;
+	f64 = 0.0;
+
+	f64 = (double)0;
+	f64 = (double)u32;
+}
+
+// C allows implicit narrowing conversions from a void pointer to an arbitrary
+// object pointer. C++ doesn't allow this conversion since it is narrowing.
+void
+Q20_void_pointer_conversion(void)
+{
+	/* expect+1: warning: operands of '=' have incompatible pointer types to 'void' and 'const void' [128] */
+	void_ptr = const_void_ptr;
+	const_void_ptr = void_ptr;
+	/* expect+1: implicit narrowing conversion from void pointer to 'pointer to int' [Q20] */
+	int_ptr = void_ptr;
+	/* expect+1: redundant cast from 'pointer to void' to 'pointer to int' before assignment [Q7] */
+	int_ptr = (int *)void_ptr;
+	/* expect+1: implicit narrowing conversion from void pointer to 'pointer to char' [Q20] */
+	char_ptr = void_ptr;
+	void_ptr = char_ptr;
+	/* expect+1: implicit narrowing conversion from void pointer to 'pointer to int' [Q20] */
+	int_ptr = void_ptr;
+	/* expect+1: warning: illegal combination of 'pointer to int' and 'pointer to char', op '=' [124] */
+	int_ptr = char_ptr;
+	/* expect+1: warning: illegal combination of 'pointer to char' and 'pointer to int', op '=' [124] */
+	char_ptr = int_ptr;
+
+	int_ptr = (void *)0;
+}

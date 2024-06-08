@@ -1,11 +1,11 @@
-# $NetBSD: varmod.mk,v 1.10 2024/02/03 00:20:23 sjg Exp $
+# $NetBSD: varmod.mk,v 1.14 2024/06/05 22:06:53 rillig Exp $
 #
 # Tests for variable modifiers, such as :Q, :S,from,to or :Ufallback.
 #
 # See also:
 #	varparse-errors.mk
 
-# As of 2022-08-06, the possible behaviors during parsing are:
+# As of 2024-06-05, the possible behaviors during parsing are:
 #
 # * `strict`: the parsing style used by most modifiers:
 #   * either uses `ParseModifierPart` or parses the modifier literal
@@ -46,9 +46,9 @@
 # | `U`          | individual   | custom parser      | N/A      |
 # | `[`          | strict       |                    | no       |
 # | `_`          | individual   | strcspn            | yes      |
-# | `gmtime`     | strict       | only literal value | yes      |
+# | `gmtime`     | strict       |                    | yes      |
 # | `hash`       | strict       |                    | N/A      |
-# | `localtime`  | strict       | only literal value | yes      |
+# | `localtime`  | strict       |                    | yes      |
 # | `q`          | strict       |                    | yes      |
 # | `range`      | strict       |                    | N/A      |
 # | `sh`         | strict       |                    | N/A      |
@@ -103,7 +103,7 @@ DOLLAR2=	${:U\$}
 .endif
 
 # A '$' followed by nothing is an error as well.
-# expect+1: Dollar followed by nothing
+# expect+1: while evaluating "${:Uword:@word@${word}$@} != "word"": Dollar followed by nothing
 .if ${:Uword:@word@${word}$@} != "word"
 .  error
 .endif
@@ -113,10 +113,33 @@ DOLLAR2=	${:U\$}
 # XXX: The .error should not be reached since the expression is
 # malformed, and this error should be propagated up to Cond_EvalLine.
 VAR=	STOP
-# expect+1: Missing delimiter ':' after modifier "P"
+# expect+1: while evaluating variable "VAR": Missing delimiter ':' after modifier "P"
 .if ${VAR:P=RE} != "STORE"
 # expect+1: Missing argument for ".error"
 .  error
 .endif
 
-all: # nothing
+# Test the word selection modifier ':[n]' with a very large number that is
+# larger than ULONG_MAX for any supported platform.
+# expect+1: Malformed conditional (${word:L:[99333000222000111000]})
+.if ${word:L:[99333000222000111000]}
+.endif
+# expect+1: Malformed conditional (${word:L:[2147483648]})
+.if ${word:L:[2147483648]}
+.endif
+
+# Test the range generation modifier ':range=n' with a very large number that
+# is larger than SIZE_MAX for any supported platform.
+# expect+2: Malformed conditional (${word:L:range=99333000222000111000})
+# expect+1: while evaluating variable "word": Invalid number "99333000222000111000}" for ':range' modifier
+.if ${word:L:range=99333000222000111000}
+.endif
+
+# In an indirect modifier, the delimiter is '\0', which at the same time marks
+# the end of the string.  The sequence '\\' '\0' is not an escaped delimiter,
+# as it would be wrong to skip past the end of the string.
+# expect+2: while evaluating "${:${:Ugmtime=\\}}": Invalid time value "\"
+# expect+1: Malformed conditional (${:${:Ugmtime=\\}})
+.if ${:${:Ugmtime=\\}}
+.  error
+.endif

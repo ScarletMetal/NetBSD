@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_init.c,v 1.47 2024/01/28 08:17:27 rillig Exp $	*/
+/*	$NetBSD: d_c99_init.c,v 1.49 2024/05/09 20:53:13 rillig Exp $	*/
 # 3 "d_c99_init.c"
 
 /*
@@ -23,7 +23,7 @@ typedef struct any {
 int scalar_without_braces = 3;
 int scalar_with_optional_braces = { 3 };
 int scalar_with_too_many_braces = {{ 3 }};
-/* expect+1: error: too many initializers [174] */
+/* expect+1: error: too many initializers for 'int' [174] */
 int scalar_with_too_many_initializers = { 3, 5 };
 
 
@@ -238,11 +238,11 @@ struct geometry geometry = {
 	.pentagons[0].points[4].x = 1,
 	.points[0][0][0] = { 0, 0 },
 	.points[2][4][1] = {301, 302 },
-	/* expect+1: error: array subscript cannot be > 2: 3 [168] */
+	/* expect+1: error: array subscript 3 cannot be > 2 [168] */
 	.points[3][0][0] = {3001, 3002 },
-	/* expect+1: error: array subscript cannot be > 4: 5 [168] */
+	/* expect+1: error: array subscript 5 cannot be > 4 [168] */
 	.points[0][5][0] = {501, 502 },
-	/* expect+1: error: array subscript cannot be > 1: 2 [168] */
+	/* expect+1: error: array subscript 2 cannot be > 1 [168] */
 	.points[0][0][2] = {21, 22 },
 };
 
